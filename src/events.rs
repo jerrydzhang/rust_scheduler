@@ -3,24 +3,24 @@ use serde::{Serialize, Deserialize};
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct Event {
     pub id: i32,
-    pub start_time: i32,
-    pub end_time: i32,
+    pub start_time: String,
+    pub end_time: String,
     pub title: String,
     pub description: String,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct CreateEvent{
-    pub start_time: i32,
-    pub end_time: i32,
+    pub start_time: String,
+    pub end_time: String,
     pub title: String,
     pub description: String,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct UpdateEvent{
-    pub start_time: Option<i32>,
-    pub end_time: Option<i32>,
+    pub start_time: Option<String>,
+    pub end_time: Option<String>,
     pub title: Option<String>,
     pub description: Option<String>,
 }
@@ -28,8 +28,8 @@ pub struct UpdateEvent{
 impl Event {
     pub async fn new(
         id: i32,
-        start_time: i32,
-        end_time: i32,
+        start_time: String,
+        end_time: String,
         title: String,
         description: String,
     ) -> Self {
@@ -46,8 +46,8 @@ impl Event {
 #[cfg(test)]
 impl UpdateEvent{
     pub async fn new(
-        start_time: Option<i32>,
-        end_time: Option<i32>,
+        start_time: Option<String>,
+        end_time: Option<String>,
         title: Option<String>,
         description: Option<String>,
     ) -> Self {
