@@ -1,6 +1,6 @@
 use tokio_rusqlite::Connection;
-use crate::database::*;
-use crate::events::{Event, UpdateEvent};
+use crate::database::event::event_functions::*;
+use crate::database::event::event_structs::{Event, UpdateEvent};
 
 
 

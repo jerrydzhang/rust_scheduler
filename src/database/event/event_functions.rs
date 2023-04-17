@@ -2,9 +2,9 @@ use axum::http::StatusCode;
 use tokio_rusqlite::Connection;
 use rusqlite::Connection as SqliteConnection;
 
-use crate::events::Event;
+use crate::database::event::event_structs::Event;
 use crate::error::AppError;
-use crate::events::UpdateEvent;
+use crate::database::event::event_structs::UpdateEvent;
 
 impl From<tokio_rusqlite::Error> for AppError {
     fn from(error: tokio_rusqlite::Error) -> Self {

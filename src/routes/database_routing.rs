@@ -3,11 +3,9 @@ use axum::{Router, Json, debug_handler};
 use axum::routing::{get, post, put, delete};
 use tokio_rusqlite::Connection;
 
-use crate::database::{db_insert_event, db_list_events, db_get_next_id, db_get_event, db_update_event, db_delete_event};
-use crate::events::{Event, CreateEvent, UpdateEvent};
+use crate::database::event::event_functions::{db_insert_event, db_list_events, db_get_next_id, db_get_event, db_update_event, db_delete_event};
+use crate::database::event::event_structs::{Event, CreateEvent, UpdateEvent};
 use crate::error::AppError;
-
-
 
 pub fn route(db: Connection) -> Router {
     Router::new()

@@ -3,12 +3,12 @@ use std::net::SocketAddr;
 use axum::{Router, response::Html, routing::get};
 use tokio_rusqlite::Connection;
 
-use crate::database::{down, up};
+use crate::database::event::event_functions::{down, up};
 
 mod error;
 mod database;
-mod events;
 mod routes;
+
 #[cfg(test)]
 mod test;
 
