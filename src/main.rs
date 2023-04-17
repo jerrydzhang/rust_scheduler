@@ -3,7 +3,7 @@ use std::net::SocketAddr;
 use axum::{Router, response::Html, routing::get};
 use tokio_rusqlite::Connection;
 
-use crate::database::event::event_functions::{down, up};
+use crate::database::{database_functions::{down, up}, user::user_structs::User};
 
 mod error;
 mod database;
@@ -16,11 +16,18 @@ mod test;
 async fn main(){
     let conn = Connection::open("test.db").await.unwrap();
 
-    down(&conn).await.unwrap();
+    // down(&conn).await.unwrap();
     up(&conn).await.unwrap();
 
+    let user = User{
+        username: "testuser".to_string(),
+        password: "testpass".to_string(),
+        id: 2,
+        token: "testtoken".to_string(),
+    };
+
     let route_all = Router::new()
-        .nest("/api", routes::database_routing::route(conn))
+        .nest("/api", routes::event_routing::route(conn,user))
         .route("/", get(|| async { Html("<h1>Hello, World!</h1>") }));
 
     let addr = SocketAddr::from(([127, 0, 0, 1], 8080));

@@ -1,13 +1,14 @@
 use axum::extract::{State, Path};
-use axum::{Router, Json, debug_handler};
+use axum::{Router, Json, debug_handler, Extension};
 use axum::routing::{get, post, put, delete};
 use tokio_rusqlite::Connection;
 
-use crate::database::event::event_functions::{db_insert_event, db_list_events, db_get_next_id, db_get_event, db_update_event, db_delete_event};
+use crate::database::event::event_functions::{db_insert_event, db_list_events, db_get_event, db_update_event, db_delete_event};
 use crate::database::event::event_structs::{Event, CreateEvent, UpdateEvent};
+use crate::database::user::user_structs::User;
 use crate::error::AppError;
 
-pub fn route(db: Connection) -> Router {
+pub fn route(db: Connection, user: User) -> Router {
     Router::new()
         .route("/hello", get(|| async { "Hello, World!" }))
         .route("/event", post(insert_event))
@@ -15,27 +16,27 @@ pub fn route(db: Connection) -> Router {
         .route("/event/:id", get(get_event))
         .route("/event/:id", put(update_event))
         .route("/event/:id", delete(delete_event))
+        .layer(Extension(user))
         .with_state(db)
 }
 
 #[debug_handler]
 async fn insert_event(
     State(conn): State<Connection>,
+    Extension(user): Extension<User>,
     Json(event): Json<CreateEvent>,
 ) -> Result<Json<Event>,AppError> {
-
-    let id = db_get_next_id(&conn).await.unwrap();
-
-    let event = db_insert_event(&conn, Event::new(id, event.start_time, event.end_time, event.title, event.description).await).await?;
+    let event = db_insert_event(&conn, user.id, event).await?;
 
     Ok(Json(event))
 }
 
 #[debug_handler]
 async fn list_events(
-    State(conn): State<Connection>
+    State(conn): State<Connection>,
+    Extension(user): Extension<User>,
 ) -> Result<Json<Vec<Event>>,AppError> {
-    let events = db_list_events(&conn).await?;
+    let events = db_list_events(&conn, user.id).await?;
 
     Ok(Json(events))
 }
@@ -44,8 +45,9 @@ async fn list_events(
 async fn get_event(
     Path(id): Path<u32>,
     State(conn): State<Connection>,
+    Extension(user): Extension<User>,
 ) -> Result<Json<Event>,AppError> {
-    let event = db_get_event(&conn, id as i32).await?;
+    let event = db_get_event(&conn, user.id, id as i32).await?;
 
     Ok(Json(event))
 }
@@ -54,9 +56,10 @@ async fn get_event(
 async fn update_event(
     Path(id): Path<u32>,
     State(conn): State<Connection>,
+    Extension(user): Extension<User>,
     Json(event): Json<UpdateEvent>,
 ) -> Result<Json<Event>,AppError> {
-    let event = db_update_event(&conn, id as i32, event).await?;
+    let event = db_update_event(&conn, user.id, id as i32, event).await?;
 
     Ok(Json(event))
 }
@@ -65,8 +68,9 @@ async fn update_event(
 async fn delete_event(
     Path(id): Path<u32>,
     State(conn): State<Connection>,
+    Extension(user): Extension<User>,
 ) -> Result<Json<Event>,AppError> {
-    let event = db_delete_event(&conn, id as i32).await?;
+    let event = db_delete_event(&conn, user.id, id as i32).await?;
 
     Ok(Json(event))
 }

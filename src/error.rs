@@ -36,6 +36,18 @@ impl IntoResponse for AppError {
     }
 }
 
+impl From<tokio_rusqlite::Error> for AppError {
+    fn from(error: tokio_rusqlite::Error) -> Self {
+        Self::new(StatusCode::INTERNAL_SERVER_ERROR, format!("Database error: {}", error))
+    }
+}
+
+impl From<rusqlite::Error> for AppError {
+    fn from(error: rusqlite::Error) -> Self {
+        Self::new(StatusCode::INTERNAL_SERVER_ERROR, format!("Database error: {}", error))
+    }
+}
+
 #[derive(Serialize, Deserialize)]
 struct ErrorResponse {
     error: String,
