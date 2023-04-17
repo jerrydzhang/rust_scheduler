@@ -2,4 +2,8 @@
 [x]Allow event related funtions to take in a user\
 []Allow the ability to create accounts\
 []Allow authentication using user accounts\
+<<<<<<< HEAD
 []Something Something frontend
+=======
+[]Something Something frontend
+>>>>>>> refs/remotes/origin/main
