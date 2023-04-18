@@ -8,6 +8,7 @@ use crate::database::{database_functions::{down, up}, user::user_structs::User};
 mod error;
 mod database;
 mod routes;
+mod app_state;
 
 #[cfg(test)]
 mod test;
@@ -27,7 +28,7 @@ async fn main(){
     };
 
     let route_all = Router::new()
-        .nest("/api", routes::event_routing::route(conn,user))
+        .nest("/api", routes::event_routing::event_route(conn,user))
         .route("/", get(|| async { Html("<h1>Hello, World!</h1>") }));
 
     let addr = SocketAddr::from(([127, 0, 0, 1], 8080));

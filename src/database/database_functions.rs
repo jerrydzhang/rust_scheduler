@@ -8,7 +8,7 @@ pub async fn up(conn: &Connection) -> Result<(),AppError> {
             "BEGIN;
                 CREATE TABLE IF NOT EXISTS Users (
                     id INTEGER PRIMARY KEY,
-                    username TEXT NOT NULL,
+                    username TEXT NOT NULL UNIQUE,
                     password TEXT NOT NULL,
                     token TEXT NOT NULL
                 );
