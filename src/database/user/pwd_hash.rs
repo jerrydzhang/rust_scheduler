@@ -7,7 +7,7 @@ use rand_core::OsRng;
 pub fn hash_password(password: &str) -> Result<String, AppError> {
     let salt = SaltString::generate(&mut OsRng);
     let hashed_password = Pbkdf2.hash_password(password.as_bytes(), &salt)
-        .map_err(|error|{
+        .map_err(|_|{
             AppError::new(
                 StatusCode::INTERNAL_SERVER_ERROR,
                 "failed to hash password",

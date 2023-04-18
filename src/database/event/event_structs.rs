@@ -26,6 +26,7 @@ pub struct UpdateEvent{
     pub description: Option<String>,
 }
 
+#[cfg(test)]
 impl Event {
     pub async fn new(
         id: i32,
@@ -46,6 +47,7 @@ impl Event {
     }
 }
 
+#[cfg(test)]
 impl CreateEvent {
     pub async fn new(
         start_time: String,
