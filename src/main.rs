@@ -4,6 +4,7 @@ use axum::{Router, response::Html, routing::get};
 use tokio_rusqlite::Connection;
 
 use crate::database::{database_functions::{down, up}, user::user_structs::User};
+use crate::routes::route_all::route;
 
 mod error;
 mod database;
@@ -27,9 +28,7 @@ async fn main(){
         token: "testtoken".to_string(),
     };
 
-    let route_all = Router::new()
-        .nest("/api", routes::event_routing::event_route(conn,user))
-        .route("/", get(|| async { Html("<h1>Hello, World!</h1>") }));
+    let route_all = route(conn, user);
 
     let addr = SocketAddr::from(([127, 0, 0, 1], 8080));
     println!("->> LISTENING on {addr}\n");
