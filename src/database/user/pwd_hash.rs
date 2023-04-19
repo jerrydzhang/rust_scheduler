@@ -11,7 +11,7 @@ pub fn hash_password(password: &str) -> Result<String, AppError> {
             AppError::new(
                 StatusCode::INTERNAL_SERVER_ERROR,
                 "failed to hash password",
-            )
+            ) 
         })?
         .to_string();
 

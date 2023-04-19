@@ -2,6 +2,7 @@ use std::net::SocketAddr;
 
 use axum::{Router, response::Html, routing::get};
 use tokio_rusqlite::Connection;
+use tower_cookies::Cookies;
 
 use crate::database::{database_functions::{down, up}, user::user_structs::User};
 use crate::routes::route_all::route;
@@ -24,9 +25,10 @@ async fn main(){
     let user = User{
         username: "testuser".to_string(),
         password: "testpass".to_string(),
-        id: 2,
+        id: 1,
         token: "testtoken".to_string(),
     };
+
 
     let route_all = route(conn, user);
 

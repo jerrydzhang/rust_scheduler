@@ -2,11 +2,13 @@ use axum::{Json, extract::State, http::StatusCode, debug_handler};
 use serde::{Serialize, Deserialize};
 use tokio_rusqlite::Connection;
 use rusqlite::Connection as RusqliteConnection;
+use tower_cookies::{Cookies, Cookie};
 
-use crate::database::user::user_structs::User;
+use crate::database::user::{user_structs::User, token::generate_token};
 use crate::error::AppError;
 
 use super::pwd_hash::{hash_password, verify_password};
+use super::token::set_token;
 
 #[derive(Serialize, Deserialize)]
 pub struct RequestUser {
@@ -24,7 +26,7 @@ pub struct ResponseUser{
 #[debug_handler]
 pub async fn create_user(
     State(conn): State<Connection>, 
-    Json(request_user): Json<RequestUser>
+    Json(request_user): Json<RequestUser>,
 ) -> Result<Json<ResponseUser>,AppError> {
 
     let hashed_password = hash_password(&request_user.password)?;
@@ -47,7 +49,6 @@ pub async fn create_user(
         // implement id generation
         id: new_id,
         username: request_user.username,
-        // implement password hashing
         password: hashed_password,
         // implement token generation
         token: "".to_string(),
@@ -59,7 +60,7 @@ pub async fn create_user(
             &[&user.id.to_string(), &user.username, &user.password, &user.token],
         )?;
 
-        let response_user = _get_user_by_username(conn, user.username)?;
+        let response_user = get_user_by_username(conn, user.username)?;
 
         Ok::<_, rusqlite::Error>(response_user)
     }).await?;
@@ -70,11 +71,12 @@ pub async fn create_user(
 #[debug_handler]
 pub async fn login(
     State(conn): State<Connection>,
-    Json(request_user): Json<RequestUser>
+    cookies: Cookies,
+    Json(request_user): Json<RequestUser>,
 ) -> Result<Json<User>,AppError> {
     let db_user = conn.call(move |conn|{
-        let response_user = _get_user_by_username(conn, request_user.username.clone())?;
-        let hashed_password = _get_hashed_password_by_username(conn, request_user.username.clone())?;
+        let response_user = get_user_by_username(conn, request_user.username.clone())?;
+        let hashed_password = get_hashed_password_by_username(conn, request_user.username.clone())?;
 
         let db_user = User::new(response_user.id, response_user.username, hashed_password, response_user.token);
         
@@ -84,8 +86,13 @@ pub async fn login(
     match db_user {
         Ok(db_user) => {
             if verify_password(&request_user.password, &db_user.password)? {
-                // generate token and update db
-                return Ok(Json(db_user));
+                let generated_token = generate_token("secret",db_user.username.clone())?;
+                let token = set_token(conn, db_user.username.clone(), generated_token).await?;
+                let user = User::new(db_user.id, db_user.username, db_user.password, token.clone());
+
+                cookies.add(Cookie::new("token", token));
+
+                return Ok(Json(user));
             } else {
                 return Err(AppError::new(StatusCode::UNAUTHORIZED, "Invalid password".to_string()));
             }
@@ -95,8 +102,43 @@ pub async fn login(
 
 }
 
+pub async fn logout(
+    State(conn): State<Connection>,
+    cookies: Cookies,
+) -> Result<(), AppError> {
+    let token = cookies.get("token").unwrap().value().to_string();
+    let user = get_user_by_token(conn.clone(), token).await?;
+    cookies.remove(Cookie::named("token"));
+    let token = set_token(conn, user.username, "".to_string()).await?;
 
-pub fn _get_user_by_username(conn: &RusqliteConnection, username: String) -> Result<ResponseUser,rusqlite::Error> {
+    Ok(())
+}
+
+pub async fn get_user_by_token(
+    conn: Connection,
+    token: String,
+) -> Result<User, AppError> {
+    let user = conn.call(move |conn|{
+        let mut stmt = conn.prepare(
+            "SELECT id, username, password, token FROM Users WHERE token = ?1",
+        )?;
+
+        let user = stmt.query_row(&[&token], |row| {
+            Ok(User {
+                id: row.get(0)?,
+                username: row.get(1)?,
+                password: row.get(2)?,
+                token: row.get(3)?,
+            })
+        })?;
+
+        Ok::<_, rusqlite::Error>(user)
+    }).await?;
+
+    Ok(user)
+}
+
+pub fn get_user_by_username(conn: &RusqliteConnection, username: String) -> Result<ResponseUser,rusqlite::Error> {
     let mut stmt = conn.prepare(
         "SELECT id, username, password, token FROM Users WHERE username = ?1",
     )?;
@@ -112,7 +154,7 @@ pub fn _get_user_by_username(conn: &RusqliteConnection, username: String) -> Res
     Ok(response_user)
 }
 
-pub fn _get_hashed_password_by_username(conn: &RusqliteConnection, username: String) -> Result<String,rusqlite::Error> {
+pub fn get_hashed_password_by_username(conn: &RusqliteConnection, username: String) -> Result<String,rusqlite::Error> {
     let mut stmt = conn.prepare(
         "SELECT password FROM Users WHERE username = ?1",
     )?;
