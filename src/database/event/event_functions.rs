@@ -17,14 +17,14 @@ pub async fn insert_event(
     Extension(user): Extension<User>,
     Json(create_event): Json<CreateEvent>,
 ) -> Result<Json<Event>,AppError> {
-    let event_id = _db_get_next_id(&conn).await?;
     let user_id = user.id;
+    let event_id = _db_get_next_id(&conn, user_id.clone()).await?;
     let event = conn.call(move |conn| {
         conn.execute(
-            "INSERT INTO Events (id, user_id, start_time, end_time, title, description) values (?1, ?2, datetime(?3), datetime(?4), ?5, ?6)",
-            &[&event_id.to_string(), &user_id.to_string(), &create_event.start_time, &create_event.end_time, &create_event.title, &create_event.description],
+            "INSERT INTO Events (id, local_id,user_id, start_time, end_time, title, description) values (?1, ?2, ?3, datetime(?4), datetime(?5), ?6, ?7)",
+            &[&event_id.0.to_string(), &event_id.1.to_string(), &user_id.to_string(), &create_event.start_time, &create_event.end_time, &create_event.title, &create_event.description],
         )?;
-        let return_event = _get_event(conn, user_id, event_id)?;
+        let return_event = _get_event(conn, user_id, event_id.1)?;
         Ok::<_, rusqlite::Error>(return_event)
     }).await?;
     Ok(Json(event))
@@ -38,7 +38,7 @@ pub async fn list_events(
     let user_id = user.id;
     let events = conn.call(move |conn| {
 
-        let mut stmt = conn.prepare("SELECT id, user_id, start_time, end_time, title, description FROM Events Where user_id = ?1")?;
+        let mut stmt = conn.prepare("SELECT local_id, user_id, start_time, end_time, title, description FROM Events Where user_id = ?1")?;
 
         let mut events = Vec::new();
 
@@ -88,7 +88,7 @@ pub async fn update_event(
     let event = conn.call(move |conn| {
 
         let mut stmt = conn.prepare(
-            "UPDATE Events SET start_time = datetime(?3), end_time = datetime(?4), title = ?5, description = ?6 WHERE id = ?1 AND user_id = ?2",
+            "UPDATE Events SET start_time = datetime(?3), end_time = datetime(?4), title = ?5, description = ?6 WHERE local_id = ?1 AND user_id = ?2",
         )?;
 
         let current_event = _get_event(conn, user_id, id)?;
@@ -120,32 +120,40 @@ pub async fn delete_event(
 
         let event = _get_event(conn, user_id, id)?;
 
-        conn.execute("DELETE FROM Events WHERE id = ?1 AND user_id = ?2", &[&id,&user_id])?;
+        conn.execute("DELETE FROM Events WHERE local_id = ?1 AND user_id = ?2", &[&id,&user_id])?;
         Ok::<_, rusqlite::Error>(event)
 
     }).await?;
     Ok(Json(event))
 }
 
-pub async fn _db_get_next_id(conn: &Connection) -> Result<i32,AppError> {
-    let return_id = conn.call(|conn| {
+async fn _db_get_next_id(conn: &Connection, user_id: i32) -> Result<(i32,i32),AppError> {
+    let return_ids = conn.call(move |conn| {
 
-        let mut stmt = conn.prepare(
+        let mut stmt_global_id = conn.prepare(
         "SELECT DISTINCT IFNULL(min(id + 1),0)
             FROM Events
             WHERE id + 1 NOT IN (SELECT DISTINCT id FROM Events);"
         )?;
 
-        let id: i32 = stmt.query_row([], |row| row.get(0))?;
+        let mut stmt_local_id = conn.prepare(
+            "SELECT DISTINCT IFNULL(min(local_id + 1),0)
+            FROM Events
+            WHERE local_id + 1 NOT IN (SELECT DISTINCT local_id FROM Events WHERE user_id =?1) AND user_id = ?1;"
+        )?;
 
-        Ok(id)
+        let global_id: i32 = stmt_global_id.query_row([], |row| row.get(0))?;
+
+        let local_id: i32 = stmt_local_id.query_row([user_id], |row| row.get(0))?;
+
+        Ok((global_id,local_id))
     
     }).await?;
-    Ok(return_id)
+    Ok(return_ids)
 }
 
 fn _get_event(conn: &SqliteConnection, user_id: i32, id: i32) -> Result<Event,rusqlite::Error> {
-    let mut stmt = conn.prepare("SELECT id, user_id, start_time, end_time, title, description FROM Events WHERE id = ?1 AND user_id = ?2")?;
+    let mut stmt = conn.prepare("SELECT local_id, user_id, start_time, end_time, title, description FROM Events WHERE local_id = ?1 AND user_id = ?2")?;
 
     let event = stmt.query_row(&[&id,&user_id], |row| {
         Ok(Event {

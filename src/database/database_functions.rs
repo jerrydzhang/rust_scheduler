@@ -14,6 +14,7 @@ pub async fn up(conn: &Connection) -> Result<(),AppError> {
                 );
                 CREATE TABLE IF NOT EXISTS Events (
                     id INTEGER PRIMARY KEY,
+                    local_id INTEGER NOT NULL,
                     user_id INTEGER NOT NULL,
                     start_time TEXT NOT NULL,
                     end_time TEXT NOT NULL,

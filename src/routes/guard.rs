@@ -1,4 +1,4 @@
-use axum::{middleware::Next, response::Response, http::{Request, HeaderMap, self, StatusCode}, extract::State, TypedHeader, debug_handler};
+use axum::{middleware::Next, response::Response, http::{Request, StatusCode}, extract::State};
 use tokio_rusqlite::Connection;
 use tower_cookies::Cookies;
 

@@ -1,16 +1,13 @@
 use std::net::SocketAddr;
 
-use axum::{Router, response::Html, routing::get};
 use tokio_rusqlite::Connection;
-use tower_cookies::Cookies;
 
-use crate::database::{database_functions::{down, up}, user::user_structs::User};
+use crate::database::database_functions::{down, up};
 use crate::routes::route_all::route;
 
 mod error;
 mod database;
 mod routes;
-mod app_state;
 
 #[cfg(test)]
 mod test;
@@ -22,15 +19,10 @@ async fn main(){
     // down(&conn).await.unwrap();
     up(&conn).await.unwrap();
 
-    let user = User{
-        username: "testuser".to_string(),
-        password: "testpass".to_string(),
-        id: 1,
-        token: "testtoken".to_string(),
-    };
-
-
-    let route_all = route(conn, user);
+    let route_all = route(conn);
+        // axum::Router::new()
+        // .nest("/api", route(conn))
+        // .route("/hello", axum::routing::get(|| async { "Hello, World!" }));
 
     let addr = SocketAddr::from(([127, 0, 0, 1], 8080));
     println!("->> LISTENING on {addr}\n");
