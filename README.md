@@ -8,6 +8,13 @@ A simple event management system build in rust
   - [x] Implement token verification
   - [x] Put tokens into the header
 - [ ] Implement a better way to assign ids
+  - [ ] Account specific event ids
 - [x] Implement logging out
 - [x] Implement password hashing
+- [ ] Implement password reset
+- [ ] Clean up code
+  - [ ] Remove unused code
+  - [ ] Restucture files if needed
+  - [ ] Better naming
+  - [ ] Add comments
 - [ ] Something Something frontend
