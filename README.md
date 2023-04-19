@@ -11,9 +11,8 @@ A simple event management system build in rust
   - [x] Account specific event ids
 - [x] Implement logging out
 - [x] Implement password hashing
-- [ ] Implement password reset
 - [ ] Clean up code
-  - [ ] Give all routes api prefix
+  - [x] Give all routes api prefix
   - [ ] Remove unused code
   - [ ] Restucture files if needed
   - [ ] Better naming
