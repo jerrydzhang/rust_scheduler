@@ -14,7 +14,7 @@ mod test;
 
 #[tokio::main]
 async fn main(){
-    let conn = Connection::open("test.db").await.unwrap();
+    let conn = Connection::open("scheduler.db").await.unwrap();
 
     // down(&conn).await.unwrap();
     up(&conn).await.unwrap();

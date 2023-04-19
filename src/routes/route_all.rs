@@ -2,7 +2,7 @@ use axum::{Router, routing::{get, post, put, delete}, middleware};
 use tokio_rusqlite::Connection;
 use tower_cookies::CookieManagerLayer;
 
-use crate::database::user::{user_functions::{create_user, login, logout}};
+use crate::database::{user::{user_functions::{create_user, login, logout}}};
 use crate::database::event::event_functions::{insert_event, list_events, get_event, update_event, delete_event};
 
 use super::guard::guard;

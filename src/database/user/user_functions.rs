@@ -74,6 +74,11 @@ pub async fn login(
     cookies: Cookies,
     Json(request_user): Json<RequestUser>,
 ) -> Result<Json<User>,AppError> {
+
+    if cookies.get("token").is_some() {
+        return Err(AppError::new(StatusCode::UNAUTHORIZED, "Already logged in".to_string()));
+    }
+
     let db_user = conn.call(move |conn|{
         let response_user = get_user_by_username(conn, request_user.username.clone())?;
         let hashed_password = get_hashed_password_by_username(conn, request_user.username.clone())?;
@@ -106,10 +111,14 @@ pub async fn logout(
     State(conn): State<Connection>,
     cookies: Cookies,
 ) -> Result<(), AppError> {
+    if cookies.get("token").is_none() {
+        return Err(AppError::new(StatusCode::UNAUTHORIZED, "Not logged in".to_string()));
+    }
+
     let token = cookies.get("token").unwrap().value().to_string();
     let user = get_user_by_token(conn.clone(), token).await?;
     cookies.remove(Cookie::named("token"));
-    let token = set_token(conn, user.username, "".to_string()).await?;
+    set_token(conn, user.username, "".to_string()).await?;
 
     Ok(())
 }
