@@ -1,0 +1,3 @@
+cargo:rerun-if-changed=build/main.rs
+cargo:rustc-env=TYPENUM_BUILD_CONSTS=/Users/jerryzhang/programming stuff/Personal project/rust stuff/taskmanager/target/debug/build/typenum-02f68121348a1d6b/out/consts.rs
+cargo:rustc-env=TYPENUM_BUILD_OP=/Users/jerryzhang/programming stuff/Personal project/rust stuff/taskmanager/target/debug/build/typenum-02f68121348a1d6b/out/op.rs
