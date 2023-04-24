@@ -1,3 +1,4 @@
+use axum::extract::State;
 use tokio_rusqlite::Connection;
 
 use crate::error::AppError;
@@ -28,7 +29,7 @@ pub async fn up(conn: &Connection) -> Result<(),AppError> {
     Ok(())
 }
 
-pub async fn down(conn: &Connection) -> Result<(),AppError> {
+pub async fn down(State(conn): State<Connection>) -> Result<(),AppError> {
     conn.call(|conn| {
         conn.execute_batch(
         "BEGIN;
@@ -37,6 +38,8 @@ pub async fn down(conn: &Connection) -> Result<(),AppError> {
             COMMIT;"
         )
     }).await?;
+
+    up(&conn).await?;
 
     Ok(())
 }

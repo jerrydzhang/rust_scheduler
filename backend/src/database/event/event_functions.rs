@@ -127,6 +127,7 @@ pub async fn delete_event(
     Ok(Json(event))
 }
 
+// returns (global_id, local_id)
 async fn _db_get_next_id(conn: &Connection, user_id: i32) -> Result<(i32,i32),AppError> {
     let return_ids = conn.call(move |conn| {
 

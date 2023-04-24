@@ -2,7 +2,7 @@ use axum::{Router, routing::{get, post, put, delete}, middleware};
 use tokio_rusqlite::Connection;
 use tower_cookies::CookieManagerLayer;
 
-use crate::database::{user::{user_functions::{create_user, login, logout}}};
+use crate::database::{user::{user_functions::{create_user, login, logout}}, database_functions::down};
 use crate::database::event::event_functions::{insert_event, list_events, get_event, update_event, delete_event};
 
 use super::guard::guard;
@@ -21,6 +21,7 @@ pub fn route(db: Connection) -> Router {
         .route("/api/login", post(login))
         .route("/api/logout",post(logout))
         .route("/api/hello", get(|| async { "Hello, World!" }))
+        .route("/api/dropall", delete(down))
         .with_state(db)
         .layer(CookieManagerLayer::new())
 }
